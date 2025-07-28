@@ -19,13 +19,14 @@ export interface DatabaseResult extends ResultSetHeader {
 
 // Function to get database configuration
 function getDatabaseConfig() {
-  // Railway provides these environment variables automatically
+  // Railway provides these environment variables (with and without underscores)
   const railwayConfig = {
-    host: process.env.MYSQL_HOST,
-    port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : undefined,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
+    host: process.env.MYSQLHOST || process.env.MYSQL_HOST,
+    port: process.env.MYSQLPORT ? parseInt(process.env.MYSQLPORT) : 
+          process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : undefined,
+    user: process.env.MYSQLUSER || process.env.MYSQL_USER,
+    password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE,
   }
 
   // Local development configuration
