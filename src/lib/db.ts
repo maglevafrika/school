@@ -19,37 +19,51 @@ export interface DatabaseResult extends ResultSetHeader {
 
 // Function to get database configuration
 function getDatabaseConfig() {
-  // Railway provides these environment variables (with and without underscores)
+  // Check if we're in local development first
+  if (process.env.NODE_ENV === 'development' || process.env.DB_HOST) {
+    const localConfig = {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '3306'),
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'school',
+    }
+    console.log(`🔗 Using LOCAL database config: ${localConfig.host}:${localConfig.port}/${localConfig.database}`)
+    return localConfig
+  }
+
+  // External Railway connection (for Vercel/production)
+  // Use MYSQL_PUBLIC_URL if available, otherwise individual variables
+  if (process.env.MYSQL_PUBLIC_URL) {
+    const url = new URL(process.env.MYSQL_PUBLIC_URL)
+    const config = {
+      host: url.hostname,
+      port: parseInt(url.port),
+      user: url.username,
+      password: url.password,
+      database: url.pathname.slice(1), // Remove leading slash
+    }
+    console.log(`🔗 Using RAILWAY PUBLIC URL: ${config.host}:${config.port}/${config.database}`)
+    return config
+  }
+
+  // Fallback to individual Railway variables (external connection)
   const railwayConfig = {
-    host: process.env.MYSQLHOST || process.env.MYSQL_HOST,
-    port: process.env.MYSQLPORT ? parseInt(process.env.MYSQLPORT) : 
-          process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : undefined,
-    user: process.env.MYSQLUSER || process.env.MYSQL_USER,
-    password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE,
+    host: process.env.MYSQLHOST,
+    port: process.env.MYSQLPORT ? parseInt(process.env.MYSQLPORT) : undefined,
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE,
   }
 
-  // Local development configuration
-  const localConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  }
-
-  // Use Railway config if available, otherwise fall back to local config
-  const config = railwayConfig.host ? railwayConfig : localConfig
-
-  console.log(`🔗 Using database config: ${config.host}:${config.port}/${config.database}`)
-  
-  return config
+  console.log(`🔗 Using RAILWAY individual vars: ${railwayConfig.host}:${railwayConfig.port}/${railwayConfig.database}`)
+  return railwayConfig
 }
 
 // Create connection pool for better performance
 const dbConfig = getDatabaseConfig()
 
-const pool: Pool = mysql.createPool({
+const poolConfig: mysql.PoolOptions = {
   host: dbConfig.host,
   port: dbConfig.port,
   user: dbConfig.user,
@@ -58,11 +72,14 @@ const pool: Pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  // Add SSL configuration for production (Railway requires SSL)
-  ...(process.env.NODE_ENV === 'production'
-    ? { ssl: { rejectUnauthorized: false } }
-    : {})
-})
+  
+}
+
+if (process.env.NODE_ENV === 'production') {
+  poolConfig.ssl = { rejectUnauthorized: false }
+}
+
+const pool: Pool = mysql.createPool(poolConfig)
 
 // Test the connection
 export async function testConnection(): Promise<boolean> {
