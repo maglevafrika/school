@@ -17,17 +17,50 @@ export interface DatabaseResult extends ResultSetHeader {
   affectedRows: number
 }
 
+// Function to get database configuration
+function getDatabaseConfig() {
+  // Railway provides these environment variables automatically
+  const railwayConfig = {
+    host: process.env.MYSQL_HOST,
+    port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : undefined,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+  }
+
+  // Local development configuration
+  const localConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '3306'),
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  }
+
+  // Use Railway config if available, otherwise fall back to local config
+  const config = railwayConfig.host ? railwayConfig : localConfig
+
+  console.log(`🔗 Using database config: ${config.host}:${config.port}/${config.database}`)
+  
+  return config
+}
+
 // Create connection pool for better performance
+const dbConfig = getDatabaseConfig()
+
 const pool: Pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: dbConfig.host,
+  port: dbConfig.port,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  
+  // Add SSL configuration for production (Railway requires SSL)
+  ...(process.env.NODE_ENV === 'production'
+    ? { ssl: { rejectUnauthorized: false } }
+    : {})
 })
 
 // Test the connection
@@ -35,10 +68,18 @@ export async function testConnection(): Promise<boolean> {
   try {
     const connection: PoolConnection = await pool.getConnection()
     console.log('✅ Database connected successfully')
+    console.log(`📍 Connected to: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`)
     connection.release()
     return true
   } catch (error) {
     console.error('❌ Database connection failed:', error)
+    console.error('🔧 Current config:', {
+      host: dbConfig.host,
+      port: dbConfig.port,
+      database: dbConfig.database,
+      user: dbConfig.user,
+      hasPassword: !!dbConfig.password
+    })
     return false
   }
 }
@@ -53,6 +94,8 @@ export async function query<T extends RowDataPacket[] | ResultSetHeader>(
     return results
   } catch (error) {
     console.error('Database query error:', error)
+    console.error('SQL:', sql)
+    console.error('Params:', params)
     throw error
   }
 }
@@ -74,6 +117,7 @@ export async function transaction(queries: TransactionQuery[]): Promise<any[]> {
     return results
   } catch (error) {
     await connection.rollback()
+    console.error('Transaction failed, rolled back:', error)
     throw error
   } finally {
     connection.release()
