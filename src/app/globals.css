@@ -1,0 +1,102 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'PT Sans', sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 220 20% 97%; /* Light Gray */
+    --foreground: 220 10% 20%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 220 10% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 10% 20%;
+
+    --primary: 231 48% 48%; /* Deep Indigo */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 90%;
+    --secondary-foreground: 220 10% 20%;
+
+    --muted: 220 15% 90%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 235 28% 63%; /* Muted Blue */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 231 48% 48%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar Colors */
+    --sidebar: 231 48% 28%; 
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-border: 231 48% 35%;
+    --sidebar-accent: 231 48% 48%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-ring: 231 48% 55%;
+  }
+
+  .dark {
+    --background: 220 15% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 220 15% 15%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 220 15% 5%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 231 48% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 220 15% 20%;
+    --muted-foreground: 220 10% 65%;
+
+    --accent: 235 28% 73%;
+    --accent-foreground: 220 10% 10%;
+    
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 25%;
+    --input: 220 15% 25%;
+    --ring: 231 48% 58%;
+
+    /* Sidebar Colors - Dark */
+    --sidebar: 231 40% 12%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-border: 231 40% 20%;
+    --sidebar-accent: 231 48% 58%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-ring: 231 48% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.font-headline {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+}
